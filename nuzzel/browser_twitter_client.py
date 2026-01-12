@@ -157,7 +157,7 @@ class BrowserTwitterClient(TwitterClient):
                             logger.warning("Could not find logged-in elements after cookie injection")
 
                             # Save debug screenshot
-                            from pathlib import Path
+
                             debug_dir = Path("debug_output")
                             debug_dir.mkdir(exist_ok=True)
                             await self.page.screenshot(path=str(debug_dir / "auth_check_failed.png"))
@@ -801,14 +801,80 @@ class BrowserTwitterClient(TwitterClient):
         # Ensure handle doesn't have @ prefix for URL
         url_handle = handle.lstrip('@')
 
-        await self.page.goto(f"https://x.com/{url_handle}/likes",
+        likes_url = f"https://x.com/{url_handle}/likes"
+        logger.info("Navigating to likes page: %s", likes_url)
+        await self.page.goto(likes_url,
                             wait_until="domcontentloaded",
                             timeout=60000)
         await self._random_delay(3, 5)
 
+        # Debug: Capture page state after navigation
+        debug_dir = Path("debug_output")
+        debug_dir.mkdir(exist_ok=True)
+
+        # Wait a bit more for content to load
+        await asyncio.sleep(2)
+
+        # Take screenshot
+        screenshot_path = debug_dir / "likes_page_initial.png"
+        await self.page.screenshot(path=str(screenshot_path), full_page=True)
+        logger.info("Saved initial likes page screenshot to %s", screenshot_path)
+
+        # Log page state
+        current_url = self.page.url
+        page_title = await self.page.title()
+        logger.info("Likes page - URL: %s, Title: %s", current_url, page_title)
+
+        # Check for common error/empty state messages
+        try:
+            page_text = await self.page.inner_text("body")
+            logger.debug("Page body text (first 1000 chars): %s", page_text[:1000])
+
+            # Check for specific error/empty states
+            error_indicators = [
+                "Something went wrong",
+                "Try again",
+                "This page doesn't exist",
+                "You don't have any likes yet",
+                "These likes are private",
+                "Sign in",
+                "Log in",
+                "Rate limit",
+                "temporarily restricted",
+            ]
+            for indicator in error_indicators:
+                if indicator.lower() in page_text.lower():
+                    logger.warning("Found potential error indicator on page: '%s'", indicator)
+        except Exception as e:
+            logger.warning("Error reading page text: %s", e)
+
+        # Log initial responses captured
+        logger.info("Responses captured after navigation: %s", len(self._captured_responses))
+        for i, resp in enumerate(self._captured_responses):
+            resp_url = resp.get("url", "")
+            logger.info("  Response %s: %s", i + 1, resp_url.split('/')[-1].split('?')[0] if resp_url else "unknown")
+
         # Scroll to collect liked tweets - use a larger max_items for responses
         # since many responses might not be "Likes"
         responses = await self._scroll_and_collect(max_items=max(100, max_results * 2))
+
+        # Debug: Capture state after scrolling
+        screenshot_path = debug_dir / "likes_page_after_scroll.png"
+        await self.page.screenshot(path=str(screenshot_path), full_page=True)
+        logger.info("Saved post-scroll likes page screenshot to %s", screenshot_path)
+
+        # Log all response URLs found
+        logger.info("Total responses collected after scrolling: %s", len(responses))
+        response_types = {}
+        for resp in responses:
+            resp_url = resp.get("url", "")
+            endpoint = resp_url.split('/')[-1].split('?')[0] if resp_url else "unknown"
+            response_types[endpoint] = response_types.get(endpoint, 0) + 1
+        logger.info("Response types: %s", response_types)
+
+        # Check if we found any Likes responses
+        likes_responses = [r for r in responses if "Likes" in r.get("url", "")]
+        logger.info("Found %s responses containing 'Likes' in URL", len(likes_responses))
 
         all_tweets = []
         all_users = {}
@@ -825,6 +891,33 @@ class BrowserTwitterClient(TwitterClient):
         limited_tweets = all_tweets[:max_results]
 
         logger.info("Collected %s liked tweets", len(limited_tweets))
+
+        # Additional debugging if no tweets found
+        if len(limited_tweets) == 0:
+            logger.warning("No liked tweets collected!")
+            logger.warning("  - Total responses: %s", len(responses))
+            logger.warning("  - Responses with 'Likes' in URL: %s", len([r for r in responses if "Likes" in r.get("url", "")]))
+
+            # Save final diagnostic screenshot
+            debug_dir = Path("debug_output")
+            debug_dir.mkdir(exist_ok=True)
+            diagnostic_path = debug_dir / "likes_no_tweets_diagnostic.png"
+            await self.page.screenshot(path=str(diagnostic_path), full_page=True)
+            logger.info("Saved diagnostic screenshot to %s", diagnostic_path)
+
+            # Try to get more info about what's on the page
+            try:
+                # Check for tweet containers
+                tweet_count = await self.page.locator('[data-testid="tweet"]').count()
+                logger.info("  - Tweet elements found on page: %s", tweet_count)
+
+                # Get visible text that might explain the empty state
+                main_content = await self.page.locator('[data-testid="primaryColumn"], main, [role="main"]').first
+                if await main_content.count() > 0:
+                    content_text = await main_content.inner_text()
+                    logger.info("  - Main content preview: %s", content_text[:500] if content_text else "empty")
+            except Exception as e:
+                logger.warning("Error during diagnostic check: %s", e)
 
         return {
             "data": limited_tweets,
@@ -856,14 +949,82 @@ class BrowserTwitterClient(TwitterClient):
         # Ensure handle doesn't have @ prefix for URL
         url_handle = handle.lstrip('@')
 
-        await self.page.goto(f"https://x.com/{url_handle}",
+        user_url = f"https://x.com/{url_handle}"
+        logger.info("Navigating to user profile page: %s", user_url)
+        await self.page.goto(user_url,
                             wait_until="domcontentloaded",
                             timeout=60000)
         await self._random_delay(3, 5)
 
+        # Debug: Capture page state after navigation
+        debug_dir = Path("debug_output")
+        debug_dir.mkdir(exist_ok=True)
+
+        # Wait a bit more for content to load
+        await asyncio.sleep(2)
+
+        # Take screenshot
+        screenshot_path = debug_dir / "user_tweets_page_initial.png"
+        await self.page.screenshot(path=str(screenshot_path), full_page=True)
+        logger.info("Saved initial user tweets page screenshot to %s", screenshot_path)
+
+        # Log page state
+        current_url = self.page.url
+        page_title = await self.page.title()
+        logger.info("User tweets page - URL: %s, Title: %s", current_url, page_title)
+
+        # Check for common error/empty state messages
+        try:
+            page_text = await self.page.inner_text("body")
+            logger.debug("Page body text (first 1000 chars): %s", page_text[:1000])
+
+            # Check for specific error/empty states
+            error_indicators = [
+                "Something went wrong",
+                "Try again",
+                "This page doesn't exist",
+                "doesn't have any posts",
+                "hasn't posted anything yet",
+                "This account doesn't exist",
+                "Sign in",
+                "Log in",
+                "Rate limit",
+                "temporarily restricted",
+                "This account's Tweets are protected",
+            ]
+            for indicator in error_indicators:
+                if indicator.lower() in page_text.lower():
+                    logger.warning("Found potential error indicator on page: '%s'", indicator)
+        except Exception as e:
+            logger.warning("Error reading page text: %s", e)
+
+        # Log initial responses captured
+        logger.info("Responses captured after navigation: %s", len(self._captured_responses))
+        for i, resp in enumerate(self._captured_responses):
+            resp_url = resp.get("url", "")
+            logger.info("  Response %s: %s", i + 1, resp_url.split('/')[-1].split('?')[0] if resp_url else "unknown")
+
         # Scroll to collect user tweets - use a larger max_items for responses
         # since many responses might not be "UserTweets"
         responses = await self._scroll_and_collect(max_items=max(100, max_results * 2))
+
+        # Debug: Capture state after scrolling
+        screenshot_path = debug_dir / "user_tweets_page_after_scroll.png"
+        await self.page.screenshot(path=str(screenshot_path), full_page=True)
+        logger.info("Saved post-scroll user tweets page screenshot to %s", screenshot_path)
+
+        # Log all response URLs found
+        logger.info("Total responses collected after scrolling: %s", len(responses))
+        response_types = {}
+        for resp in responses:
+            resp_url = resp.get("url", "")
+            endpoint = resp_url.split('/')[-1].split('?')[0] if resp_url else "unknown"
+            response_types[endpoint] = response_types.get(endpoint, 0) + 1
+        logger.info("Response types: %s", response_types)
+
+        # Check if we found any UserTweets responses
+        user_tweets_responses = [r for r in responses if "UserTweets" in r.get("url", "")]
+        logger.info("Found %s responses containing 'UserTweets' in URL", len(user_tweets_responses))
 
         all_tweets = []
         all_users = {}
@@ -880,6 +1041,33 @@ class BrowserTwitterClient(TwitterClient):
         limited_tweets = all_tweets[:max_results]
 
         logger.info("Collected %s user tweets", len(limited_tweets))
+
+        # Additional debugging if no tweets found
+        if len(limited_tweets) == 0:
+            logger.warning("No user tweets collected!")
+            logger.warning("  - Total responses: %s", len(responses))
+            logger.warning("  - Responses with 'UserTweets' in URL: %s", len([r for r in responses if "UserTweets" in r.get("url", "")]))
+
+            # Save final diagnostic screenshot
+            debug_dir = Path("debug_output")
+            debug_dir.mkdir(exist_ok=True)
+            diagnostic_path = debug_dir / "user_tweets_no_tweets_diagnostic.png"
+            await self.page.screenshot(path=str(diagnostic_path), full_page=True)
+            logger.info("Saved diagnostic screenshot to %s", diagnostic_path)
+
+            # Try to get more info about what's on the page
+            try:
+                # Check for tweet containers
+                tweet_count = await self.page.locator('[data-testid="tweet"]').count()
+                logger.info("  - Tweet elements found on page: %s", tweet_count)
+
+                # Get visible text that might explain the empty state
+                main_content = await self.page.locator('[data-testid="primaryColumn"], main, [role="main"]').first
+                if await main_content.count() > 0:
+                    content_text = await main_content.inner_text()
+                    logger.info("  - Main content preview: %s", content_text[:500] if content_text else "empty")
+            except Exception as e:
+                logger.warning("Error during diagnostic check: %s", e)
 
         return {
             "data": limited_tweets,

@@ -52,3 +52,12 @@ jobs:
           TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
         run: python -m nuzzel.main
+
+      - name: Upload debug screenshots
+        if: always()  # Upload artifacts even if previous step failed
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshots
+          path: debug_output/
+          retention-days: 7
+          if-no-files-found: ignore

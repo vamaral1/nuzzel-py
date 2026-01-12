@@ -384,7 +384,11 @@
             {% endif %}
 
             {% if not engagement_predictions.most_likely_to_like and not engagement_predictions.most_likely_to_retweet %}
-                {% if engagement_predictions.error %}
+                {% if engagement_predictions.skip %}
+                    <div class="error">
+                        <strong>{{ engagement_predictions.skip }}</strong>
+                    </div>
+                {% elif engagement_predictions.error %}
                     <div class="error">
                         <strong>{{ engagement_predictions.error }}</strong>
                     </div>

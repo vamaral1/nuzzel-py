@@ -114,15 +114,17 @@ class DigestGenerator:
         # Section 6: Most Likely to Like and Retweet
         logger.info("Predicting user engagement...")
         try:
-            if processed_data.user_posted_content:
+            # Engagement predictor works with either liked tweets OR posted tweets
+            if processed_data.user_liked_content or processed_data.user_posted_content:
                 digest_data["engagement_predictions"] = predict_user_engagement(
                     processed_data.tweets,
                     processed_data.user_liked_content,
                     processed_data.user_posted_content
                 )
             else:
+                # No user engagement history available (no liked tweets or posted tweets collected)
                 digest_data["engagement_predictions"] = {
-                    "skip": "No user tweet history available"
+                    "skip": "Unable to predict engagement: No user engagement history available. We need your liked tweets or posted tweets to learn your preferences and make predictions."
                 }
         except Exception as e:
             logger.error("Error predicting engagement: %s", e, exc_info=True)
