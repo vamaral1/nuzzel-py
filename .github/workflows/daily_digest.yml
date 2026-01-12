@@ -1,0 +1,54 @@
+name: Twitter Digest
+
+on:
+  schedule:
+    # Adjust cron schedule based on desired interval
+    # Example: 5am Los Angeles time = 1pm UTC every day
+    - cron: '0 13 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120  # 2 hours max
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: |
+          playwright install chromium --with-deps
+
+      - name: Run digest
+        env:
+          MAILJET_API_KEY: ${{ secrets.MAILJET_API_KEY }}
+          MAILJET_API_SECRET: ${{ secrets.MAILJET_API_SECRET }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPEN_ROUTER_API_KEY: ${{ secrets.OPEN_ROUTER_API_KEY }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          TWITTER_CLIENT_TYPE: ${{ vars.TWITTER_CLIENT_TYPE || 'browser' }}
+          TWITTER_SESSION_COOKIES: ${{ secrets.TWITTER_SESSION_COOKIES }}
+          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
+          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
+          # User ID: Either provide TWITTER_USER_ID directly (recommended) OR provide OAuth1 credentials
+          # If TWITTER_USER_ID is not set, the browser client will fetch it from the API using OAuth1 credentials
+          TWITTER_USER_ID: ${{ secrets.TWITTER_USER_ID }}
+          # OAuth1 credentials (required only if TWITTER_USER_ID is not provided)
+          TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+          TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+        run: python -m nuzzel.main

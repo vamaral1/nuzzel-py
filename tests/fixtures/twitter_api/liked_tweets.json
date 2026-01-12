@@ -1,0 +1,59 @@
+{
+  "data": [
+    {
+      "id": "1700000000000000000",
+      "text": "The intersection of technology and human creativity never ceases to amaze me. What's your favorite tech innovation? 🤖✨",
+      "author_id": "2000001",
+      "created_at": "2024-01-10T14:20:00.000Z",
+      "public_metrics": {
+        "retweet_count": 30,
+        "like_count": 120,
+        "reply_count": 15
+      }
+    },
+    {
+      "id": "1700000000000000001",
+      "text": "Sometimes the most profound wisdom comes from the quiet moments of reflection. What's one thing you're grateful for today? 🙏",
+      "author_id": "2000002",
+      "created_at": "2024-01-09T16:45:00.000Z",
+      "public_metrics": {
+        "retweet_count": 15,
+        "like_count": 89,
+        "reply_count": 20
+      }
+    },
+    {
+      "id": "1700000000000000002",
+      "text": "New album track just dropped! The creative process behind this one was incredibly fulfilling. 🎵🎨",
+      "author_id": "2000003",
+      "created_at": "2024-01-08T11:30:00.000Z",
+      "public_metrics": {
+        "retweet_count": 50,
+        "like_count": 200,
+        "reply_count": 25
+      }
+    },
+    {
+      "id": "1700000000000000003",
+      "text": "The way light filters through autumn leaves is pure poetry. Nature's artwork is the best inspiration. 🍂📖",
+      "author_id": "2000004",
+      "created_at": "2024-01-07T09:15:00.000Z",
+      "public_metrics": {
+        "retweet_count": 8,
+        "like_count": 67,
+        "reply_count": 5
+      }
+    },
+    {
+      "id": "1700000000000000004",
+      "text": "Deep dive into the philosophy of consciousness. Mind-bending stuff that keeps me up at night thinking. 🧠💭",
+      "author_id": "2000005",
+      "created_at": "2024-01-06T20:00:00.000Z",
+      "public_metrics": {
+        "retweet_count": 22,
+        "like_count": 95,
+        "reply_count": 18
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "most_likely_to_like": {
+    "tweet_id": "1800000000000000000",
+    "explanation": "This tweet discusses AI technology which matches your interests."
+  },
+  "most_likely_to_retweet": {
+    "tweet_id": "1800000000000000001",
+    "explanation": "This tweet about nature and philosophy often resonates with your audience."
+  }
+}

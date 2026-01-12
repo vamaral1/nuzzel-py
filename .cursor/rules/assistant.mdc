@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Whenever you run python code you must be inside the .venv virtual environment

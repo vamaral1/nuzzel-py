@@ -1,0 +1,6 @@
+[MASTER]
+max-line-length=120
+disable=broad-exception-caught
+
+[FORMAT]
+max-line-length=120

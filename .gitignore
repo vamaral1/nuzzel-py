@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Tests
+.cache
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+tests/output/
+tests/templates/email_preview.html
+
+# Environment
+.python-version
+.env
+.venv/
+.DS_Store
+
+# Cookies
+cookies.json

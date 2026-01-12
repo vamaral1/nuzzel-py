@@ -1,0 +1,186 @@
+{
+  "data": [
+    {
+      "id": "1800000000000000000",
+      "text": "Just finished reading an amazing article about AI advancements. The future is looking bright! 🤖 #AI #Tech",
+      "author_id": "1000001",
+      "created_at": "2024-01-15T10:30:00.000Z",
+      "public_metrics": {
+        "retweet_count": 25,
+        "like_count": 150,
+        "reply_count": 10
+      },
+      "entities": {
+        "urls": [
+          {
+            "expanded_url": "https://example.com/ai-advancements-article",
+            "title": "The Future of Artificial Intelligence: Breakthroughs and Challenges"
+          }
+        ]
+      },
+      "context_annotations": [
+        {
+          "domain": {
+            "id": "123",
+            "name": "Technology",
+            "description": "Technology and computing"
+          },
+          "entity": {
+            "id": "456",
+            "name": "Artificial Intelligence"
+          }
+        }
+      ]
+    },
+    {
+      "id": "1800000000000000001",
+      "text": "Beautiful sunset today. Sometimes you just need to pause and appreciate the simple things in life. 🌅 #Nature #Philosophy",
+      "author_id": "1000002",
+      "created_at": "2024-01-15T09:15:00.000Z",
+      "public_metrics": {
+        "retweet_count": 5,
+        "like_count": 89,
+        "reply_count": 3
+      },
+      "entities": {},
+      "context_annotations": [
+        {
+          "domain": {
+            "id": "124",
+            "name": "Arts & Entertainment",
+            "description": "Arts, entertainment, and culture"
+          },
+          "entity": {
+            "id": "457",
+            "name": "Nature Photography"
+          }
+        }
+      ]
+    },
+    {
+      "id": "1800000000000000002",
+      "text": "Excited to announce our new music album drops next week! It's been a journey creating these songs. 🎵 #Music #NewRelease",
+      "author_id": "1000003",
+      "created_at": "2024-01-15T08:45:00.000Z",
+      "public_metrics": {
+        "retweet_count": 45,
+        "like_count": 200,
+        "reply_count": 25
+      },
+      "entities": {},
+      "context_annotations": [
+        {
+          "domain": {
+            "id": "125",
+            "name": "Music",
+            "description": "Music and audio"
+          },
+          "entity": {
+            "id": "458",
+            "name": "Album Release"
+          }
+        }
+      ]
+    },
+    {
+      "id": "1800000000000000003",
+      "text": "Deep thoughts on relationships and human connection in the digital age. How do we maintain genuine connections? 💭 #Relationships #Philosophy",
+      "author_id": "1000004",
+      "created_at": "2024-01-15T07:20:00.000Z",
+      "public_metrics": {
+        "retweet_count": 12,
+        "like_count": 67,
+        "reply_count": 15
+      },
+      "entities": {
+        "urls": [
+          {
+            "expanded_url": "https://example.com/relationships-digital-age",
+            "title": "Digital Relationships: Finding Connection in a Connected World"
+          }
+        ]
+      },
+      "context_annotations": [
+        {
+          "domain": {
+            "id": "126",
+            "name": "Society",
+            "description": "Social issues and society"
+          },
+          "entity": {
+            "id": "459",
+            "name": "Relationships"
+          }
+        }
+      ]
+    },
+    {
+      "id": "1800000000000000004",
+      "text": "Check out this amazing art installation! Contemporary art never ceases to amaze me. 🎨 #Art #Culture",
+      "author_id": "1000005",
+      "created_at": "2024-01-15T06:10:00.000Z",
+      "public_metrics": {
+        "retweet_count": 8,
+        "like_count": 45,
+        "reply_count": 5
+      },
+      "entities": {},
+      "context_annotations": [
+        {
+          "domain": {
+            "id": "127",
+            "name": "Arts & Entertainment",
+            "description": "Arts, entertainment, and culture"
+          },
+          "entity": {
+            "id": "460",
+            "name": "Contemporary Art"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": "1000001",
+      "username": "tech_guru",
+      "name": "Tech Guru",
+      "public_metrics": {
+        "followers_count": 50000
+      }
+    },
+    {
+      "id": "1000002",
+      "username": "nature_lover",
+      "name": "Nature Lover",
+      "public_metrics": {
+        "followers_count": 15000
+      }
+    },
+    {
+      "id": "1000003",
+      "username": "musician_pro",
+      "name": "Musician Pro",
+      "public_metrics": {
+        "followers_count": 75000
+      }
+    },
+    {
+      "id": "1000004",
+      "username": "deep_thinker",
+      "name": "Deep Thinker",
+      "public_metrics": {
+        "followers_count": 25000
+      }
+    },
+    {
+      "id": "1000005",
+      "username": "art_enthusiast",
+      "name": "Art Enthusiast",
+      "public_metrics": {
+        "followers_count": 12000
+      }
+    }
+  ],
+  "media": []
+}

@@ -1,0 +1,20 @@
+{
+  "summary": "Mock summary of recent tweets covering technology and current events.",
+  "themes": [
+    {
+      "theme": "Technology advancements in AI and machine learning",
+      "description": "Discussions about recent AI developments and machine learning breakthroughs",
+      "tweet_ids": ["1", "2"]
+    },
+    {
+      "theme": "Current events and social discussions",
+      "description": "Ongoing conversations about current events and social topics",
+      "tweet_ids": ["3", "4"]
+    },
+    {
+      "theme": "Personal reflections and philosophy",
+      "description": "Thoughtful posts about personal experiences and philosophical ideas",
+      "tweet_ids": ["5"]
+    }
+  ]
+}

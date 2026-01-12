@@ -1,0 +1,14 @@
+{
+  "data": [
+    {
+      "id": "3000001",
+      "name": "Tech Innovators",
+      "member_count": 25
+    },
+    {
+      "id": "3000002",
+      "name": "Philosophy Thinkers",
+      "member_count": 18
+    }
+  ]
+}
