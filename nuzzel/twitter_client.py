@@ -439,23 +439,24 @@ def create_twitter_client() -> TwitterClient:
     elif twitter_client_type == "browser":
         # Prevent circular import
         from nuzzel.browser_twitter_client import BrowserTwitterClient
-        # Try to read cookies from cookies.json file first
-        cookies_json = None
-        project_root = Path(__file__).parent.parent
-        cookies_file = project_root / "cookies.json"
 
-        if cookies_file.exists():
-            try:
-                with open(cookies_file, "r", encoding="utf-8") as f:
-                    cookies_data = json.load(f)
-                    cookies_json = json.dumps(cookies_data)
-                    logger.info("Loaded cookies from %s", cookies_file)
-            except (json.JSONDecodeError, IOError) as e:
-                logger.warning("Failed to read cookies.json: %s. Falling back to environment variable.", e)
+        cookies_json = os.getenv("TWITTER_SESSION_COOKIES")
 
-        # Fall back to environment variable if cookies.json doesn't exist or failed to read
-        if not cookies_json:
-            cookies_json = os.getenv("TWITTER_SESSION_COOKIES")
+        # Strip whitespace and validate cookies_json is not empty and is valid JSON
+        if cookies_json:
+            cookies_json = cookies_json.strip()
+            if not cookies_json:
+                cookies_json = None
+                logger.warning(
+                    "TWITTER_SESSION_COOKIES is empty. Falling back to username and password environment variables."
+                )
+            else:
+                # Validate that cookies_json is valid JSON
+                try:
+                    json.loads(cookies_json)
+                except json.JSONDecodeError as e:
+                    cookies_json = None
+                    logger.warning("TWITTER_SESSION_COOKIES contains invalid JSON: %s. Falling back to username and password environment variables.", e)
 
         username = os.getenv("TWITTER_USERNAME")
         password = os.getenv("TWITTER_PASSWORD")

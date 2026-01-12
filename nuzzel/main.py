@@ -63,7 +63,7 @@ class TwitterDigestService:
                 user_id = await self.twitter_client.get_user_id_async()
             else:
                 user_id = await self.twitter_client.get_user_id()
-            logger.info("Authenticated as user: %s", user_id)
+            logger.debug("Authenticated as user: %s", user_id)
         except Exception as e:
             logger.error("Failed to get user ID: %s", e, exc_info=True)
             return await self._send_error_digest(f"Failed to authenticate with Twitter API: {str(e)}")

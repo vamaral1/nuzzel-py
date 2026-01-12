@@ -623,7 +623,7 @@ class BrowserTwitterClient(TwitterClient):
         if env_user_id:
             # Only log once to avoid clutter
             if not hasattr(self, '_user_id_logged'):
-                logger.info("Using user ID from TWITTER_USER_ID environment variable: %s", env_user_id)
+                logger.debug("Using user ID from TWITTER_USER_ID environment variable: %s", env_user_id)
                 self._user_id_logged = True
             return env_user_id.strip()
 
