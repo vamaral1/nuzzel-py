@@ -87,7 +87,7 @@ def parse_cookies_from_text(text: str) -> List[Dict[str, Any]]:
             if same_site_val.lower() in ('lax', 'strict', 'none'):
                 same_site = same_site_val.capitalize()
 
-        cookie = {
+        cookie: Dict[str, Any] = {
             "name": name,
             "value": value,
             "domain": domain,
@@ -152,8 +152,8 @@ def main():
         cookies_file = project_root / "cookies.json"
 
         # Write cookies to file
-        with open(cookies_file, 'w') as f:
-            json.dump(cookies, f, indent=2)
+        with open(cookies_file, 'w', encoding='utf-8') as f:
+            json.dump(cookies, f)
 
         print(f"\n✓ Successfully created cookies.json with {len(cookies)} cookies")
         print(f"  Location: {cookies_file}")
