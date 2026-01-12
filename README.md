@@ -230,7 +230,7 @@ USE_MOCK=false python -m nuzzel.main
 
 1. Go to your GitHub repository
 2. Navigate to **Settings** → **Secrets and variables** → **Actions**
-3. Click **New repository secret** and add all the keys and values from your `.env` file
+3. Click **New repository secret** and add all the keys and values from your `.env` file. Note: don't wrap JSON in extra quotes. Add `[...]` and not `'[...]'`
 
 ### 5.2: Configure GitHub Variables
 
