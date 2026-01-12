@@ -96,8 +96,9 @@ TWITTER_CLIENT_TYPE=browser
 # Option 2: Use environment variable
 TWITTER_SESSION_COOKIES='[{"name":"auth_token","value":"...","domain":".twitter.com",...}]'
 
+# Used to construct profile/likes URLs in addition to auth if using with password
+TWITTER_USERNAME=your_twitter_username
 # Optional: Username/password fallback (not recommended, may require 2FA)
-# TWITTER_USERNAME=your_username
 # TWITTER_PASSWORD=your_password
 
 # Mailjet (required)

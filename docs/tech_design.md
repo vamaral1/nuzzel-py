@@ -478,7 +478,7 @@ Per PRD requirements, each section must handle errors gracefully:
 
 **Twitter Browser Client**:
 - `TWITTER_SESSION_COOKIES`: JSON array of cookies (for cookie auth, preferred)
-- `TWITTER_USERNAME`: Twitter username/email (for login auth, fallback)
+- `TWITTER_USERNAME`: Twitter username (for login auth, fallback, liked posts, user posts)
 - `TWITTER_PASSWORD`: Twitter password (for login auth, fallback)
 - `BROWSER_HEADLESS`: `"true"` or `"false"` (default: `"true"`) for local debugging
 
