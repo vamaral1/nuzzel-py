@@ -80,7 +80,7 @@ def _parse_themes_response(response: str) -> Dict[str, Any]:
         "summary": "Error parsing themes response",
         "themes": []
     }
-    
+
     try:
         result = parse_llm_json_response(response, default=default_result)
 

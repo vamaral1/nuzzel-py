@@ -63,7 +63,7 @@ The service supports two methods for collecting Twitter data:
 - **Pros**: More reliable, official API, better data quality (includes context annotations)
 - **Cons**: Requires paid API subscription. The free tier (100 posts/month) is insufficient for daily digests. You need a paid Twitter API subscription.
 
-The browser client requires Twitter session cookies for authentication. 
+The browser client requires Twitter session cookies for authentication.
 
 1. **Open browser DevTools**:
    - Navigate to `https://twitter.com`

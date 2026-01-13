@@ -61,7 +61,7 @@ Build a simple, automated service that:
 
 #### Section 4: Tweets by Interest Category
 - **Interest-Based Curation**: Show 5 random tweets for each of the user's configured interest categories
-- **Categorization Method**: 
+- **Categorization Method**:
   - Use LLM to classify tweets into interest categories
   - Or use keyword matching as fallback/primary method
 - **Random Selection**: For each category, randomly select 5 tweets from all tweets that match that category
@@ -82,7 +82,7 @@ Build a simple, automated service that:
   - LLM analyzes patterns in engagement behavior (topics, authors, style, etc.)
   - LLM selects the tweet from the current timeline that the user is most likely to retweet and the one they are most likely to like
   - Display the recommended tweets with explanation of why they match the user's patterns
-- **Display Format**: 
+- **Display Format**:
   - Tweet content, author, link to original tweet
   - Brief LLM explanation of why this tweet was selected based on past behavior
 - **On Error**: Fill in section with message "Error predicting which tweet you will like or retweet" so that user can search in logs and debug

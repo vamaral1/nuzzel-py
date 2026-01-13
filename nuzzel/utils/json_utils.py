@@ -2,14 +2,16 @@
 JSON Parsing Utilities for LLM Responses
 
 This module provides robust JSON parsing functions for handling LLM responses
-that may contain malformed or truncated JSON. It includes repair mechanisms
-for common JSON issues like missing commas, trailing commas, and truncated responses.
+that may contain malformed or truncated JSON. It uses the json-repair package
+to handle common JSON issues from LLM outputs.
 """
 
 import json
 import logging
 import re
 from typing import Dict, Any, Optional
+
+import json_repair
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -20,7 +22,7 @@ def parse_llm_json_response(response: str, default: Optional[Dict[str, Any]] = N
     Parse JSON from an LLM response with robust error handling and repair.
 
     This function extracts JSON from the response (handling markdown code blocks),
-    attempts to parse it, and if parsing fails, applies repair mechanisms to fix
+    attempts to parse it, and if parsing fails, uses json-repair to fix
     common JSON issues before retrying.
 
     Args:
@@ -41,32 +43,36 @@ def parse_llm_json_response(response: str, default: Optional[Dict[str, Any]] = N
 
     except json.JSONDecodeError as e:
         # Log the error location for debugging
-        logger.warning("Initial JSON parse failed: %s. Attempting repair...", e)
+        logger.warning("Initial JSON parse failed: %s. Attempting repair with json-repair...", e)
 
-        # Try to repair and parse again
+        # Try to repair and parse again using json-repair.loads() which is a drop-in replacement
         try:
-            repaired_json = repair_json(json_str)
-
-            # Log what changed for debugging
-            if repaired_json != json_str:
-                logger.debug("JSON was modified by repair")
-
-            result = json.loads(repaired_json)
-            logger.info("JSON repair successful")
+            # json_repair.loads() automatically repairs and parses the JSON
+            result = json_repair.loads(json_str)
+            logger.info("JSON repair successful using json-repair")
             return result
-        except (json.JSONDecodeError, ValueError) as repair_error:
-            logger.error("Error parsing JSON response after repair: %s", repair_error, exc_info=True)
-            # Log a snippet around the error position for debugging
-            if hasattr(repair_error, 'pos'):
+        except (json.JSONDecodeError, ValueError, Exception) as repair_error:
+            logger.error("Error parsing JSON response after json-repair: %s", repair_error, exc_info=True)
+            # Log a snippet around the error position for debugging if available
+            if hasattr(repair_error, 'pos') and hasattr(repair_error, 'doc'):
                 pos = repair_error.pos
+                doc = repair_error.doc
                 start = max(0, pos - 50)
-                end = min(len(repaired_json), pos + 100)
-                snippet = repaired_json[start:end]
+                end = min(len(doc), pos + 100)
+                snippet = doc[start:end]
                 # Mark the error position
                 marker_pos = pos - start
                 logger.error("JSON snippet around error (pos %d):\n%s\n%s^-- ERROR HERE",
                             pos, snippet, " " * marker_pos)
-            
+            elif hasattr(repair_error, 'pos'):
+                pos = repair_error.pos
+                start = max(0, pos - 50)
+                end = min(len(json_str), pos + 100)
+                snippet = json_str[start:end]
+                marker_pos = pos - start
+                logger.error("JSON snippet around error (pos %d):\n%s\n%s^-- ERROR HERE",
+                            pos, snippet, " " * marker_pos)
+
             if default is not None:
                 return default
             raise ValueError(f"Could not parse JSON even after repair: {repair_error}") from repair_error
@@ -117,80 +123,3 @@ def extract_json_from_response(response: str) -> str:
         raise ValueError("No JSON found in response")
 
     return response[json_start:json_end]
-
-
-def repair_json(json_str: str) -> str:
-    """
-    Attempt to repair common JSON issues from LLM responses.
-
-    Args:
-        json_str: Potentially malformed JSON string
-
-    Returns:
-        Repaired JSON string
-    """
-    repaired = json_str
-
-    # Fix 1: Missing commas after closing brace before opening quote
-    # Handles: }\n  "key" or }  "key" or }"key"
-    # Uses \s* to match zero or more whitespace (including none)
-    repaired = re.sub(r'\}(\s*)"([^}])', r'},\1"\2', repaired)
-
-    # Fix 2: Missing commas after numbers before opening quote (next key)
-    # Handles: 0.5\n  "key" - number followed by whitespace and quote
-    # Be careful to only match at end of values, not inside strings
-    repaired = re.sub(r'(\d)(\s*\n\s*)"', r'\1,\2"', repaired)
-
-    # Fix 3: Missing commas after closing bracket before opening quote
-    # Handles: ]\n  "key" or ]  "key"
-    repaired = re.sub(r'\](\s*)"', r'],\1"', repaired)
-
-    # Fix 4: Trailing commas before closing braces/brackets (invalid JSON)
-    repaired = re.sub(r',(\s*)\}', r'\1}', repaired)
-    repaired = re.sub(r',(\s*)\]', r'\1]', repaired)
-
-    # Fix 5: Double commas that might have been introduced
-    repaired = re.sub(r',(\s*),', r',\1', repaired)
-
-    # Fix 6: Handle truncated JSON - try to close it properly
-    repaired = fix_truncated_json(repaired)
-
-    return repaired
-
-
-def fix_truncated_json(json_str: str) -> str:
-    """
-    Attempt to fix truncated JSON by closing unclosed braces/brackets.
-
-    Args:
-        json_str: Potentially truncated JSON string
-
-    Returns:
-        JSON string with balanced braces
-    """
-    # Count opening and closing braces/brackets
-    open_braces = json_str.count('{')
-    close_braces = json_str.count('}')
-    open_brackets = json_str.count('[')
-    close_brackets = json_str.count(']')
-
-    # Check if truncated (more opens than closes)
-    if open_braces > close_braces or open_brackets > close_brackets:
-        logger.warning("Detected truncated JSON response (braces: %d open, %d close; brackets: %d open, %d close). Attempting to salvage...",
-                     open_braces, close_braces, open_brackets, close_brackets)
-
-        # Add missing closing braces/brackets
-        missing_brackets = open_brackets - close_brackets
-        missing_braces = open_braces - close_braces
-
-        # Add closing brackets first, then braces (reverse of typical nesting)
-        json_str = json_str.rstrip()
-        if missing_brackets > 0:
-            json_str += ']' * missing_brackets
-        if missing_braces > 0:
-            json_str += '\n}' * missing_braces
-
-        logger.info("Salvaged truncated JSON by adding %d closing braces and %d closing brackets",
-                   missing_braces, missing_brackets)
-
-    return json_str

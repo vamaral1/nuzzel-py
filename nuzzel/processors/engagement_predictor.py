@@ -122,7 +122,7 @@ class EngagementPredictor:
             "most_likely_to_like": {"tweet_id": "", "explanation": ""},
             "most_likely_to_retweet": {"tweet_id": "", "explanation": ""}
         }
-        
+
         try:
             result = parse_llm_json_response(response, default=default_result)
 
