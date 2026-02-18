@@ -84,6 +84,10 @@ def _parse_themes_response(response: str) -> Dict[str, Any]:
     try:
         result = parse_llm_json_response(response, default=default_result)
 
+        # LLM may return JSON that parses to a list (e.g. array of themes); require a dict
+        if not isinstance(result, dict):
+            return default_result
+
         # Validate structure
         if "summary" not in result:
             result["summary"] = "Unable to generate summary"
