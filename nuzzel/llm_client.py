@@ -305,11 +305,27 @@ class MockLLMClient(LLMClient):
 
     def generate_text(self, prompt: str, system_message: Optional[str] = None) -> str:
         """Return mock responses based on the type of prompt"""
-        if "themes and insights" in prompt.lower() or "summary" in prompt.lower():
+        pl = prompt.lower()
+        if "# themes merge" in pl:
             return self._load_fixture("themes_and_insights.json")
-        elif "categorize" in prompt.lower() or "interest" in prompt.lower():
+        if "# themes: per-chunk" in pl:
+            return json.dumps(
+                {
+                    "notes": "Mock chunk notes",
+                    "themes": [
+                        {
+                            "theme": "Mock chunk theme",
+                            "description": "From chunked themes path",
+                            "tweet_ids": ["1"],
+                        }
+                    ],
+                }
+            )
+        if "# themes and insights" in pl:
+            return self._load_fixture("themes_and_insights.json")
+        elif "categorize" in pl or "interest categorization" in pl:
             return self._load_fixture("interest_categorization.json")
-        elif "engagement" in prompt.lower() or "like" in prompt.lower():
+        elif "engagement prediction" in pl or "# engagement prediction" in pl:
             return self._load_fixture("engagement_prediction.json")
         else:
             # Default fallback response
