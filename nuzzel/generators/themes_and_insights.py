@@ -128,7 +128,8 @@ def generate_themes_and_insights(
         llm_client: Optional LLM client (creates one if not provided)
 
     Returns:
-        Dictionary with summary and themes, or error message
+        Dictionary with ``highlights`` (bullet strings), optional legacy ``summary``,
+        and ``themes``, or an error message
 
     When the tweet count exceeds ``NUZZEL_THEMES_CHUNK_SIZE`` (default 45), themes
     are produced with one LLM call per chunk plus a final merge call so backup
@@ -162,10 +163,28 @@ def generate_themes_and_insights(
         return {"error": "Error getting top themes"}
 
 
+def _normalize_highlights(value: Any) -> List[str]:
+    """Keep 3–7-style bullet strings from the model; cap length for email layout."""
+    if not isinstance(value, list):
+        return []
+    out: List[str] = []
+    for item in value:
+        if isinstance(item, str):
+            s = item.strip()
+            if s:
+                out.append(s)
+        elif item is not None:
+            s = str(item).strip()
+            if s:
+                out.append(s)
+    return out[:7]
+
+
 def _parse_themes_response(response: str) -> Dict[str, Any]:
     """Parse LLM response into themes structure"""
     default_result = {
         "summary": "Error parsing themes response",
+        "highlights": [],
         "themes": [],
     }
 
@@ -178,7 +197,11 @@ def _parse_themes_response(response: str) -> Dict[str, Any]:
 
         # Validate structure
         if "summary" not in result:
-            result["summary"] = "Unable to generate summary"
+            result["summary"] = ""
+        if "highlights" not in result:
+            result["highlights"] = []
+        else:
+            result["highlights"] = _normalize_highlights(result["highlights"])
         if "themes" not in result:
             result["themes"] = []
 

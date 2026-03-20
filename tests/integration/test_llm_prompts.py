@@ -84,8 +84,9 @@ class TestLLMPrompts:
             # Basic structure validation
             assert isinstance(response, dict)
             if 'error' not in response:
-                assert 'summary' in response
+                assert 'highlights' in response
                 assert 'themes' in response
+                assert isinstance(response['highlights'], list)
                 assert isinstance(response['themes'], list)
 
             logger.info("Themes and insights test completed successfully")

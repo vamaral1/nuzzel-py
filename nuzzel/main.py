@@ -205,10 +205,22 @@ async def main() -> int:
 
     # Get and validate time window
     try:
-        time_window_days = validate_time_window(DEFAULT_TIME_WINDOW_DAYS)
+        # Allow overriding the digest coverage window (useful when changing run cadence).
+        # Example: every-other-day digests should typically cover the last 2 days.
+        env_window_days = os.getenv("DIGEST_TIME_WINDOW_DAYS")
+        if env_window_days is None or env_window_days == "":
+            window_days_raw: int | str = DEFAULT_TIME_WINDOW_DAYS
+        else:
+            window_days_raw = env_window_days  # type: ignore[assignment]
+        time_window_days = validate_time_window(window_days_raw)
     except ValidationError as e:
-        logger.error("Invalid time window: %s. Using default time window of 1 day.", e, exc_info=True)
-        time_window_days = 1
+        logger.error(
+            "Invalid time window: %s. Using default time window of %d day(s).",
+            e,
+            DEFAULT_TIME_WINDOW_DAYS,
+            exc_info=True,
+        )
+        time_window_days = DEFAULT_TIME_WINDOW_DAYS
         return 1
 
     mailjet_api_key = os.getenv('MAILJET_API_KEY')

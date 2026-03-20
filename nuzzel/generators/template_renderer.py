@@ -88,19 +88,14 @@ class TemplateRenderer:
             'time_window_days': time_window_days,
             'stats': digest_data.get('stats', {}),
             'themes_summary': digest_data.get('themes_summary', {}),
-            'shared_links': digest_data.get('shared_links', {}),
-            'top_liked_tweets': digest_data.get('top_liked_tweets', []),
-            'top_retweeted_tweets': digest_data.get('top_retweeted_tweets', []),
-            'list_engagement': digest_data.get('list_engagement', {}),
-            'interest_tweets': digest_data.get('interest_tweets', {}),
-            'context_categories': digest_data.get('context_categories', {}),
-            'engagement_predictions': digest_data.get('engagement_predictions', {})
+            'tweet_feed': digest_data.get('tweet_feed', []),
         }
 
         # Add helper functions
         context.update({
             'get_tweet_url': self._get_tweet_url,
             'format_engagement': self._format_engagement,
+            'tag_class': self._tag_css_class,
             'is_error': self._is_error_data
         })
 
@@ -200,6 +195,26 @@ class TemplateRenderer:
             # If markdown conversion fails, return the original text escaped
             return Markup(text.replace('\n', '<br>'))
 
+    def _tag_css_class(self, tag: str) -> str:
+        """
+        CSS class suffix for tag chip color-coding in the email template.
+
+        Interest: yellow, Most Likely: red, Top...: blue, Theme: green,
+        Links: purple, else gray.
+        """
+        t = (tag or "").strip()
+        if t.startswith("Interest:"):
+            return "tag-interest"
+        if t.startswith("Most Likely"):
+            return "tag-prediction"
+        if t.startswith("Theme:") or t == "Theme":
+            return "tag-theme"
+        if t.startswith("Links:"):
+            return "tag-links"
+        if t in ("Top Liked", "Top Retweeted") or t.startswith("Top "):
+            return "tag-top"
+        return "tag-default"
+
     def _get_tweet_url(self, tweet_id: str) -> str:
         """
         Generate Twitter URL for a tweet.
@@ -234,13 +249,15 @@ class TemplateRenderer:
         else:
             return "No engagement"
 
-        parts = [
-            f"❤️ {like_count}",
-            f"🔄 {retweet_count}",
-            f"💬 {reply_count}"
+        # Render as HTML spans so icons and counts don't get separated by
+        # email-client reflow (keeps 💬 count immediately to the right).
+        parts: list[str] = [
+            f'<span class="engagement-metric">❤️&nbsp;{like_count}</span>',
+            f'<span class="engagement-metric">🔄&nbsp;{retweet_count}</span>',
+            f'<span class="engagement-metric">💬&nbsp;{reply_count}</span>',
         ]
 
-        return " · ".join(parts) if parts else "No engagement"
+        return Markup("".join(parts)) if parts else Markup("No engagement")
 
     def _is_error_data(self, data: Any) -> bool:
         """

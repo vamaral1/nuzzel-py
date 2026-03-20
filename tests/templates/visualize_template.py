@@ -4,16 +4,20 @@ Template Visualizer
 This script generates fake data and renders the email template for visualization.
 """
 
+import sys
 from pathlib import Path
 
-# Add nuzzel directory to Python path (consistent with nuzzel.main and nuzzel.update_lists)
-project_root = Path(__file__).parent.parent.parent
+# Add project root to Python path (so `python tests/templates/visualize_template.py` works)
+project_root = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 from nuzzel.generators.template_renderer import TemplateRenderer
 
 
 def generate_fake_data():
     """Generate fake data matching the template expectations."""
+
+    from collections import defaultdict
 
     fake_data = {
         'stats': {
@@ -22,14 +26,12 @@ def generate_fake_data():
             'total_links': 34
         },
         'themes_summary': {
-            'summary': """🔥 **Hot Topics Today:**
-
-The past 24 hours have been marked by significant developments across technology, climate action, remote work, and space exploration. AI and quantum computing continue to dominate discussions, with new breakthroughs and tools emerging that could reshape how we work and create.
-
-**Key Insights:**
-- AI adoption is accelerating across creative industries
-- Climate tech investments reached record highs this quarter
-- Hybrid work models showing 23% productivity improvements""",
+            'highlights': [
+                'AI and quantum computing dominating discussions; new tools reshaping how we work and create',
+                'Climate tech and policy momentum; record investment chatter this quarter',
+                'Hybrid and remote work: productivity and team dynamics still a live thread',
+                'Space exploration and launch news drawing strong engagement',
+            ],
             'themes': [
                 {
                     'theme': 'AI & Technology',
@@ -339,6 +341,101 @@ The past 24 hours have been marked by significant developments across technology
         }
     }
 
+    # Build the unified `tweet_feed` structure expected by `templates/email.html`.
+    # This preview script is allowed to synthesize these fields since it does not
+    # run the full digest pipeline.
+    def _tweet_from_feed_source(tweet_obj: dict) -> dict:
+        metrics = tweet_obj.get("public_metrics") or {}
+        return {
+            "id": tweet_obj.get("id", ""),
+            "text": tweet_obj.get("text", ""),
+            "like_count": metrics.get("like_count", 0),
+            "retweet_count": metrics.get("retweet_count", 0),
+            "reply_count": metrics.get("reply_count", 0),
+        }
+
+    tweet_by_id = {}
+
+    for tweet_obj in fake_data["top_liked_tweets"]:
+        tweet_by_id[tweet_obj["id"]] = _tweet_from_feed_source(tweet_obj)
+    for tweet_obj in fake_data["top_retweeted_tweets"]:
+        tweet_by_id[tweet_obj["id"]] = _tweet_from_feed_source(tweet_obj)
+
+    for _, tweets in fake_data["interest_tweets"].items():
+        for tweet_obj in tweets:
+            tweet_by_id[tweet_obj["id"]] = _tweet_from_feed_source(tweet_obj)
+
+    for _, list_data in fake_data["list_engagement"].items():
+        for tweet_obj in list_data.get("top_liked") or []:
+            tweet_by_id[tweet_obj["id"]] = _tweet_from_feed_source(tweet_obj)
+        for tweet_obj in list_data.get("top_retweeted") or []:
+            tweet_by_id[tweet_obj["id"]] = _tweet_from_feed_source(tweet_obj)
+
+    for pred_key in ["most_likely_to_like", "most_likely_to_retweet"]:
+        pred_obj = fake_data["engagement_predictions"].get(pred_key) or {}
+        tweet_obj = pred_obj.get("tweet") or {}
+        if tweet_obj and isinstance(tweet_obj, dict) and tweet_obj.get("id"):
+            tweet_by_id[tweet_obj["id"]] = _tweet_from_feed_source(tweet_obj)
+
+    tags_by_id = defaultdict(set)
+
+    # Themes -> tags
+    for theme_obj in fake_data["themes_summary"].get("themes") or []:
+        theme_name = (theme_obj.get("theme") or "").strip()
+        for tid in theme_obj.get("tweet_ids") or []:
+            if not tid:
+                continue
+            tag = f"Theme: {theme_name}" if theme_name else "Theme"
+            tags_by_id[tid].add(tag)
+
+    # Engagement picks -> tags
+    for tweet_obj in fake_data["top_liked_tweets"]:
+        tags_by_id[tweet_obj["id"]].add("Top Liked")
+    for tweet_obj in fake_data["top_retweeted_tweets"]:
+        tags_by_id[tweet_obj["id"]].add("Top Retweeted")
+
+    # Lists -> tags
+    for list_name, list_data in (fake_data.get("list_engagement") or {}).items():
+        list_name = (list_name or "").strip()
+        if not list_name or not isinstance(list_data, dict):
+            continue
+        for tweet_obj in list_data.get("top_liked") or []:
+            tags_by_id[tweet_obj["id"]].add(list_name)
+            tags_by_id[tweet_obj["id"]].add("Top Liked")
+        for tweet_obj in list_data.get("top_retweeted") or []:
+            tags_by_id[tweet_obj["id"]].add(list_name)
+            tags_by_id[tweet_obj["id"]].add("Top Retweeted")
+
+    # Interests -> tags
+    for category, tweets in (fake_data.get("interest_tweets") or {}).items():
+        category = (category or "").strip()
+        if not category:
+            continue
+        for tweet_obj in tweets or []:
+            tags_by_id[tweet_obj["id"]].add(f"Interest: {category}")
+
+    # Predictions -> tags
+    like_tid = (fake_data["engagement_predictions"].get("most_likely_to_like") or {}).get("tweet_id")
+    if like_tid:
+        tags_by_id[like_tid].add("Most Likely to Like")
+    retweet_tid = (fake_data["engagement_predictions"].get("most_likely_to_retweet") or {}).get("tweet_id")
+    if retweet_tid:
+        tags_by_id[retweet_tid].add("Most Likely to Retweet")
+
+    # Create feed entries (hydrate from our collected tweet objects)
+    tweet_feed = []
+    for tweet_id, tags in tags_by_id.items():
+        tweet = tweet_by_id.get(tweet_id)
+        if not tweet:
+            continue
+        tweet_feed.append({**tweet, "tags": sorted(tags)})
+
+    # Sort like the production builder: primary = tag count desc, then like/retweet desc.
+    tweet_feed.sort(
+        key=lambda t: (-len(t.get("tags") or []), -t.get("like_count", 0), -t.get("retweet_count", 0), t.get("id", "")),
+    )
+    fake_data["tweet_feed"] = tweet_feed
+
     return fake_data
 
 
@@ -354,8 +451,14 @@ def main():
     templates_dir = project_root / "templates"
     renderer = TemplateRenderer(str(templates_dir))
 
-    # Render template (using default 1 day for visualization)
-    html_content = renderer.render_digest_email(fake_data, time_window_days=1)
+    # Only keys consumed by `email.html` / TemplateRenderer context
+    digest_for_render = {
+        "stats": fake_data["stats"],
+        "themes_summary": fake_data["themes_summary"],
+        "tweet_feed": fake_data["tweet_feed"],
+    }
+    # Render template using a 2 day window for every-other-day coverage preview.
+    html_content = renderer.render_digest_email(digest_for_render, time_window_days=2)
 
     # Save to file
     output_file = Path(__file__).parent / "email_preview.html"

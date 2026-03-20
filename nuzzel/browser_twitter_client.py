@@ -727,7 +727,7 @@ class BrowserTwitterClient(TwitterClient):
         # Scroll and collect (5 minutes with jitter, or until 2 days old)
         responses = await self._scroll_and_collect(
             max_items=300,
-            scroll_timeout=5 * 60,  # 5 minutes in seconds
+            scroll_timeout=10 * 60,  # 10 minutes in seconds
             stop_date_str=stop_date_str
         )
 

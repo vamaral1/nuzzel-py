@@ -4,7 +4,9 @@ on:
   schedule:
     # Adjust cron schedule based on desired interval
     # Example: 5am Los Angeles time = 1pm UTC every day
-    - cron: '0 13 * * *'
+    # Runs every other day at 1:00 PM UTC (5:00 AM Los Angeles time)
+    # Note: `*/2` is based on day-of-month and may vary slightly at month boundaries.
+    - cron: '0 13 */2 * *'
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
@@ -32,6 +34,8 @@ jobs:
 
       - name: Run digest
         env:
+          # Every-other-day run should typically cover the last 2 days.
+          DIGEST_TIME_WINDOW_DAYS: 2
           MAILJET_API_KEY: ${{ secrets.MAILJET_API_KEY }}
           MAILJET_API_SECRET: ${{ secrets.MAILJET_API_SECRET }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

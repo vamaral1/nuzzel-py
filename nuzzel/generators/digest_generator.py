@@ -21,6 +21,7 @@ from nuzzel.processors.tweet_aggregator import (
 )
 from nuzzel.constants import INTERESTS
 from nuzzel.models import ProcessedData
+from nuzzel.generators.tweet_feed import build_merged_tweet_feed
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class DigestGenerator:
         """
         logger.info("Generating digest for %d tweets", len(processed_data.tweets))
 
-        digest_data = {}
+        digest_data: Dict[str, Any] = {}
 
         # Section 1: Top Highlights (Themes and Insights)
         logger.info("Generating themes and insights...")
@@ -132,6 +133,14 @@ class DigestGenerator:
                 "error": "Error predicting which tweet you will like or retweet"
             }
 
+        # Section 7: Unified tagged tweet feed
+        logger.info("Building unified tagged tweet feed...")
+        try:
+            digest_data["tweet_feed"] = build_merged_tweet_feed(processed_data, digest_data)
+        except Exception as e:
+            logger.error("Error building unified tweet feed: %s", e, exc_info=True)
+            digest_data["tweet_feed"] = []
+
         # Stats
         digest_data["stats"] = {
             "total_tweets": processed_data.total_tweets,
@@ -140,7 +149,7 @@ class DigestGenerator:
         }
 
         # Generate subject line
-        subject = self._generate_subject_line(digest_data)
+        subject = self._generate_subject_line()
 
         # Render HTML
         html_content = render_digest_email(digest_data, time_window_days)
@@ -150,35 +159,10 @@ class DigestGenerator:
             "html_content": html_content
         }
 
-    def _generate_subject_line(self, digest_data: Dict[str, Any]) -> str:
-        """
-        Generate email subject line based on digest content.
-
-        Args:
-            digest_data: Complete digest data
-
-        Returns:
-            Subject line string
-        """
-        current_date = datetime.now().strftime("%B %d, %Y")
-
-        # Try to extract a key theme from themes_summary
-        key_theme = None
-        themes_summary = digest_data.get("themes_summary", {})
-        if "error" not in themes_summary and "themes" in themes_summary:
-            themes = themes_summary.get("themes", [])
-            if themes:
-                # Handle both formats: list of strings or list of dicts
-                first_theme = themes[0]
-                if isinstance(first_theme, dict):
-                    key_theme = first_theme.get("theme", "")
-                elif isinstance(first_theme, str):
-                    key_theme = first_theme
-
-        if key_theme:
-            return f"Your Twitter Digest: {current_date} - {key_theme}"
-        else:
-            return f"Your Twitter Digest: {current_date}"
+    def _generate_subject_line(self) -> str:
+        """Subject line: date only (month name, day, year)."""
+        now = datetime.now()
+        return f"Your Twitter Digest: {now.strftime('%B')}, {now.day} {now.year}"
 
 
 def generate_email_digest(processed_data: ProcessedData,

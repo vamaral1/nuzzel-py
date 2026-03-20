@@ -223,6 +223,14 @@ USE_MOCK=false python -m nuzzel.main
 
 **For Browser Client**: If you want to see what the browser is doing, set `BROWSER_HEADLESS=false` as well.
 
+### Visualize digest with fake data
+
+```bash
+python tests/templates/visualize_template.py
+```
+
+Open generated `email_preview.html` file in browser
+
 ---
 
 ## Step 5: Deploy to GitHub Actions
@@ -246,7 +254,7 @@ Edit `.github/workflows/daily_digest.yml` to customize when the digest runs:
 ```yaml
 on:
   schedule:
-    - cron: '0 13 * * *'  # Runs daily at 1:00 PM UTC (5:00 AM Los Angeles time)
+    - cron: '0 13 */2 * *'  # Runs every other day at 1:00 PM UTC (5:00 AM Los Angeles time)
 ```
 **Note**: GitHub Actions uses UTC time. Convert your local time to UTC.
 
