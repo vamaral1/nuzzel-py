@@ -197,7 +197,7 @@ class OpenRouterClient(LLMClient):
             messages.append({"role": "user", "content": prompt})
 
             data = {
-                "model": "qwen/qwen3-4b:free",  # Free model
+                "model": "nvidia/nemotron-3-super-120b-a12b:free",
                 "messages": messages,
                 "temperature": 0.7,
                 "max_tokens": 2048
@@ -216,8 +216,22 @@ class OpenRouterClient(LLMClient):
             if result.get('choices', [{}])[0].get('message', {}).get('content'):
                 return result['choices'][0]['message']['content'].strip()
             else:
+                logger.warning(
+                    "OpenRouter empty choices; keys=%s",
+                    list(result.keys()) if isinstance(result, dict) else type(result),
+                )
                 raise LLMError("Empty response from OpenRouter")
 
+        except requests.HTTPError as e:
+            resp = e.response
+            if resp is not None:
+                snippet = (resp.text or "")[:800]
+                logger.warning(
+                    "OpenRouter HTTP %s: %s",
+                    resp.status_code,
+                    snippet,
+                )
+            raise LLMError("OpenRouter API error") from e
         except requests.RequestException as e:
             raise LLMError("OpenRouter API error") from e
         except Exception as e:
