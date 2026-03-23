@@ -249,15 +249,15 @@ class TemplateRenderer:
         else:
             return "No engagement"
 
-        # Render as HTML spans so icons and counts don't get separated by
-        # email-client reflow (keeps 💬 count immediately to the right).
+        # Render as HTML spans; separate metrics with spaces that survive
+        # clients that ignore flex/gap (Gmail, many mobile clients).
         parts: list[str] = [
             f'<span class="engagement-metric">❤️&nbsp;{like_count}</span>',
             f'<span class="engagement-metric">🔄&nbsp;{retweet_count}</span>',
             f'<span class="engagement-metric">💬&nbsp;{reply_count}</span>',
         ]
 
-        return Markup("".join(parts)) if parts else Markup("No engagement")
+        return Markup(" &nbsp; ".join(parts)) if parts else Markup("No engagement")
 
     def _is_error_data(self, data: Any) -> bool:
         """
