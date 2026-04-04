@@ -66,6 +66,43 @@ def _tweet_id_from_tweet_url(tweet_url: str) -> Optional[str]:
     return None
 
 
+def _pick_representative_tweet_id_for_shared_link(
+    tweet_refs: List[Any],
+    tweets: Dict[str, Tweet],
+) -> Optional[str]:
+    """
+    For one aggregated shared URL, choose a single tweet to surface in the feed.
+
+    Multiple tweets can share the same URL; tagging all of them duplicates cards.
+    We pick the tweet with the strongest engagement among refs that exist in `tweets`.
+    """
+    candidate_ids: List[str] = []
+    for tweet_ref in tweet_refs:
+        if not isinstance(tweet_ref, dict):
+            continue
+        tweet_url = _safe_str(tweet_ref.get("tweet_url"))
+        raw_tid = tweet_ref.get("tweet_id") if "tweet_id" in tweet_ref else None
+        resolved_tweet_id = _normalize_tweet_id(raw_tid)
+        if not resolved_tweet_id:
+            resolved_tweet_id = _tweet_id_from_tweet_url(tweet_url)
+        if not resolved_tweet_id or resolved_tweet_id not in tweets:
+            continue
+        if resolved_tweet_id not in candidate_ids:
+            candidate_ids.append(resolved_tweet_id)
+
+    if not candidate_ids:
+        return None
+
+    def _rep_score(tid: str) -> Tuple[float, int]:
+        t = tweets[tid]
+        return (
+            float(t.normalized_like_count) + float(t.normalized_retweet_count),
+            int(t.like_count) + int(t.retweet_count),
+        )
+
+    return max(candidate_ids, key=_rep_score)
+
+
 def _tag_count_sort_key(item: Dict[str, Any]) -> Tuple[int, float, float, str]:
     # Feed is primarily sorted by tag count (descending), then by engagement
     # proxies (descending), then by id for deterministic ordering.
@@ -165,7 +202,20 @@ def build_merged_tweet_feed(processed_data: ProcessedData, digest_data: Dict[str
             for link_obj in domain_data.get("links") or []:
                 if not isinstance(link_obj, dict):
                     continue
-                for tweet_ref in link_obj.get("tweets") or []:
+                tweet_refs = link_obj.get("tweets") or []
+                if not isinstance(tweet_refs, list):
+                    tweet_refs = []
+
+                rep_id = _pick_representative_tweet_id_for_shared_link(
+                    tweet_refs, processed_data.tweets
+                )
+                if rep_id:
+                    add_tag(rep_id, "Shared link")
+                    if domain_str:
+                        add_tag(rep_id, f"Links: {domain_str}")
+                    continue
+
+                for tweet_ref in tweet_refs:
                     if not isinstance(tweet_ref, dict):
                         continue
                     tweet_url = _safe_str(tweet_ref.get("tweet_url"))
@@ -185,9 +235,6 @@ def build_merged_tweet_feed(processed_data: ProcessedData, digest_data: Dict[str
                                 raw_tid,
                             )
                         continue
-                    add_tag(resolved_tweet_id, "Shared link")
-                    if domain_str:
-                        add_tag(resolved_tweet_id, f"Links: {domain_str}")
 
     # 6) Predictions -> tags
     engagement_predictions = digest_data.get("engagement_predictions") or {}

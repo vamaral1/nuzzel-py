@@ -206,6 +206,49 @@ def test_shared_link_tweet_id_int_coerced():
     assert "Shared link" in feed[0]["tags"]
 
 
+def test_shared_link_same_url_tags_single_representative_tweet():
+    """One aggregated URL with many tweets -> only one card (highest engagement)."""
+    low = _tweet(
+        "111",
+        like_count=1,
+        retweet_count=0,
+        normalized_like_count=0.1,
+        normalized_retweet_count=0.0,
+    )
+    high = _tweet(
+        "222",
+        like_count=100,
+        retweet_count=50,
+        normalized_like_count=0.9,
+        normalized_retweet_count=0.8,
+    )
+    processed = ProcessedData(tweets={"111": low, "222": high})
+    digest_data = {
+        "shared_links": {
+            "links_by_domain": {
+                "la2050.me": {
+                    "links": [
+                        {
+                            "link": "https://la2050.me/foo",
+                            "share_count": 2,
+                            "tweets": [
+                                {"tweet_url": "https://twitter.com/i/status/111"},
+                                {"tweet_url": "https://twitter.com/i/status/222"},
+                            ],
+                        },
+                    ],
+                },
+            },
+        },
+    }
+    feed = build_merged_tweet_feed(processed, digest_data)
+    assert len(feed) == 1
+    assert feed[0]["id"] == "222"
+    tags = set(feed[0]["tags"])
+    assert "Shared link" in tags
+    assert "Links: la2050.me" in tags
+
+
 def test_shared_link_unparseable_tweet_url_logs_warning(caplog):
     caplog.set_level(logging.WARNING)
     tw = _tweet(
